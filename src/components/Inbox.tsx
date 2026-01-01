@@ -37,6 +37,18 @@ export function Inbox({ onBack, onCompose }: InboxProps) {
   const [view, setView] = useState<View>("list");
   const [selectedEmail, setSelectedEmail] = useState<EmailDetail | null>(null);
   const [loadingDetail, setLoadingDetail] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [searching, setSearching] = useState(false);
+
+  const filteredEmails = emails.filter((email) => {
+    if (!searchQuery) return true;
+    const query = searchQuery.toLowerCase();
+    return (
+      email.from.toLowerCase().includes(query) ||
+      email.subject.toLowerCase().includes(query) ||
+      email.to.some((t) => t.toLowerCase().includes(query))
+    );
+  });
 
   useEffect(() => {
     loadEmails();
@@ -133,18 +145,42 @@ export function Inbox({ onBack, onCompose }: InboxProps) {
       return;
     }
 
+    if (searching) {
+      if (e.name === "escape") {
+        setSearching(false);
+        setSearchQuery("");
+        setSelectedIndex(0);
+      } else if (e.name === "return") {
+        setSearching(false);
+      } else if (e.name === "backspace") {
+        setSearchQuery((prev) => prev.slice(0, -1));
+        setSelectedIndex(0);
+      } else if (e.char && e.char.length === 1) {
+        setSearchQuery((prev) => prev + e.char);
+        setSelectedIndex(0);
+      }
+      return;
+    }
+
     if (e.name === "escape" || e.name === "q") {
-      onBack();
+      if (searchQuery) {
+        setSearchQuery("");
+        setSelectedIndex(0);
+      } else {
+        onBack();
+      }
     } else if (e.name === "up" || e.name === "k") {
       setSelectedIndex((prev) => Math.max(0, prev - 1));
     } else if (e.name === "down" || e.name === "j") {
-      setSelectedIndex((prev) => Math.min(emails.length - 1, prev + 1));
+      setSelectedIndex((prev) => Math.min(filteredEmails.length - 1, prev + 1));
     } else if (e.name === "r") {
       loadEmails();
-    } else if (e.name === "return" && emails.length > 0) {
-      loadEmailDetail(emails[selectedIndex].id);
-    } else if (e.name === "d" && emails.length > 0) {
-      loadEmailDetail(emails[selectedIndex].id).then(() => {
+    } else if (e.char === "/") {
+      setSearching(true);
+    } else if (e.name === "return" && filteredEmails.length > 0) {
+      loadEmailDetail(filteredEmails[selectedIndex].id);
+    } else if (e.name === "d" && filteredEmails.length > 0) {
+      loadEmailDetail(filteredEmails[selectedIndex].id).then(() => {
         setView("confirmDelete");
       });
     }
@@ -235,9 +271,20 @@ export function Inbox({ onBack, onCompose }: InboxProps) {
         Inbox
       </text>
       <text color="gray">
-        j/k: navigate | Enter: view | d: delete | r: refresh | Esc: back
+        j/k: navigate | /: search | Enter: view | d: delete | r: refresh | Esc: back
       </text>
       <text> </text>
+
+      {(searching || searchQuery) && (
+        <>
+          <box flexDirection="row">
+            <text color="cyan">Search: </text>
+            <text>{searchQuery}</text>
+            {searching && <text color="cyan">_</text>}
+          </box>
+          <text> </text>
+        </>
+      )}
 
       {emails.length === 0 ? (
         <>
@@ -247,9 +294,11 @@ export function Inbox({ onBack, onCompose }: InboxProps) {
             To receive emails, configure a receiving domain at resend.com
           </text>
         </>
+      ) : filteredEmails.length === 0 ? (
+        <text color="yellow">No emails match "{searchQuery}"</text>
       ) : (
         <>
-          {emails.map((email, index) => (
+          {filteredEmails.map((email, index) => (
             <box key={email.id} flexDirection="row">
               <text color={index === selectedIndex ? "cyan" : "white"}>
                 {index === selectedIndex ? "> " : "  "}
@@ -265,7 +314,7 @@ export function Inbox({ onBack, onCompose }: InboxProps) {
           ))}
           <text> </text>
           <text color="gray">
-            {emails.length} email{emails.length !== 1 ? "s" : ""}
+            {filteredEmails.length}{searchQuery ? ` of ${emails.length}` : ""} email{filteredEmails.length !== 1 ? "s" : ""}
           </text>
         </>
       )}
