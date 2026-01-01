@@ -8,6 +8,7 @@ A terminal email client powered by [Resend](https://resend.com) and [OpenTUI](ht
 - View sent emails history
 - View received emails (via Resend's receiving API)
 - Search emails by sender, recipient, or subject
+- Pagination for long email lists (10 per page)
 - Read email details with full body content
 - Reply to emails with quoted original message
 - Forward emails to other recipients
@@ -50,6 +51,7 @@ Configuration is stored in `~/.config/hypermail/config.json`.
 
 ### Inbox (list view)
 - `j/k` or arrows - Navigate emails
+- `n/p` - Next/previous page
 - `/` - Search emails (by from, to, subject)
 - `Enter` - View email detail
 - `d` - Delete email
@@ -64,6 +66,7 @@ Configuration is stored in `~/.config/hypermail/config.json`.
 
 ### Sent Emails
 - `j/k` or arrows - Navigate emails
+- `n/p` - Next/previous page
 - `/` - Search emails (by from, to, subject)
 - `Enter` - View email detail
 - `r` - Refresh

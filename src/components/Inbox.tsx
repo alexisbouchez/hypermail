@@ -29,6 +29,8 @@ interface EmailDetail {
 
 type View = "list" | "detail" | "confirmDelete";
 
+const ITEMS_PER_PAGE = 10;
+
 export function Inbox({ onBack, onCompose }: InboxProps) {
   const [emails, setEmails] = useState<ReceivedEmail[]>([]);
   const [loading, setLoading] = useState(true);
@@ -39,6 +41,7 @@ export function Inbox({ onBack, onCompose }: InboxProps) {
   const [loadingDetail, setLoadingDetail] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [searching, setSearching] = useState(false);
+  const [page, setPage] = useState(0);
 
   const filteredEmails = emails.filter((email) => {
     if (!searchQuery) return true;
@@ -49,6 +52,12 @@ export function Inbox({ onBack, onCompose }: InboxProps) {
       email.to.some((t) => t.toLowerCase().includes(query))
     );
   });
+
+  const totalPages = Math.ceil(filteredEmails.length / ITEMS_PER_PAGE);
+  const paginatedEmails = filteredEmails.slice(
+    page * ITEMS_PER_PAGE,
+    (page + 1) * ITEMS_PER_PAGE
+  );
 
   useEffect(() => {
     loadEmails();
@@ -150,14 +159,17 @@ export function Inbox({ onBack, onCompose }: InboxProps) {
         setSearching(false);
         setSearchQuery("");
         setSelectedIndex(0);
+        setPage(0);
       } else if (e.name === "return") {
         setSearching(false);
       } else if (e.name === "backspace") {
         setSearchQuery((prev) => prev.slice(0, -1));
         setSelectedIndex(0);
+        setPage(0);
       } else if (e.char && e.char.length === 1) {
         setSearchQuery((prev) => prev + e.char);
         setSelectedIndex(0);
+        setPage(0);
       }
       return;
     }
@@ -166,21 +178,28 @@ export function Inbox({ onBack, onCompose }: InboxProps) {
       if (searchQuery) {
         setSearchQuery("");
         setSelectedIndex(0);
+        setPage(0);
       } else {
         onBack();
       }
     } else if (e.name === "up" || e.name === "k") {
       setSelectedIndex((prev) => Math.max(0, prev - 1));
     } else if (e.name === "down" || e.name === "j") {
-      setSelectedIndex((prev) => Math.min(filteredEmails.length - 1, prev + 1));
+      setSelectedIndex((prev) => Math.min(paginatedEmails.length - 1, prev + 1));
     } else if (e.name === "r") {
       loadEmails();
     } else if (e.char === "/") {
       setSearching(true);
-    } else if (e.name === "return" && filteredEmails.length > 0) {
-      loadEmailDetail(filteredEmails[selectedIndex].id);
-    } else if (e.name === "d" && filteredEmails.length > 0) {
-      loadEmailDetail(filteredEmails[selectedIndex].id).then(() => {
+    } else if (e.char === "n" && totalPages > 1) {
+      setPage((prev) => Math.min(totalPages - 1, prev + 1));
+      setSelectedIndex(0);
+    } else if (e.char === "p" && totalPages > 1) {
+      setPage((prev) => Math.max(0, prev - 1));
+      setSelectedIndex(0);
+    } else if (e.name === "return" && paginatedEmails.length > 0) {
+      loadEmailDetail(paginatedEmails[selectedIndex].id);
+    } else if (e.name === "d" && paginatedEmails.length > 0) {
+      loadEmailDetail(paginatedEmails[selectedIndex].id).then(() => {
         setView("confirmDelete");
       });
     }
@@ -271,7 +290,7 @@ export function Inbox({ onBack, onCompose }: InboxProps) {
         Inbox
       </text>
       <text color="gray">
-        j/k: navigate | /: search | Enter: view | d: delete | r: refresh | Esc: back
+        j/k: navigate | n/p: page | /: search | Enter: view | d: delete | r: refresh | Esc: back
       </text>
       <text> </text>
 
@@ -298,7 +317,7 @@ export function Inbox({ onBack, onCompose }: InboxProps) {
         <text color="yellow">No emails match "{searchQuery}"</text>
       ) : (
         <>
-          {filteredEmails.map((email, index) => (
+          {paginatedEmails.map((email, index) => (
             <box key={email.id} flexDirection="row">
               <text color={index === selectedIndex ? "cyan" : "white"}>
                 {index === selectedIndex ? "> " : "  "}
@@ -315,6 +334,7 @@ export function Inbox({ onBack, onCompose }: InboxProps) {
           <text> </text>
           <text color="gray">
             {filteredEmails.length}{searchQuery ? ` of ${emails.length}` : ""} email{filteredEmails.length !== 1 ? "s" : ""}
+            {totalPages > 1 && ` | Page ${page + 1}/${totalPages}`}
           </text>
         </>
       )}
