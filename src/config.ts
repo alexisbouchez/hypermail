@@ -6,6 +6,7 @@ export interface Config {
   apiKey?: string;
   defaultFrom?: string;
   signature?: string;
+  archivedEmails?: string[];
 }
 
 const CONFIG_DIR = join(homedir(), ".config", "hypermail");
@@ -68,4 +69,22 @@ export function setSignature(signature: string): void {
   const config = loadConfig();
   config.signature = signature;
   saveConfig(config);
+}
+
+export function getArchivedEmails(): string[] {
+  return loadConfig().archivedEmails || [];
+}
+
+export function archiveEmail(id: string): void {
+  const config = loadConfig();
+  const archived = config.archivedEmails || [];
+  if (!archived.includes(id)) {
+    archived.push(id);
+    config.archivedEmails = archived;
+    saveConfig(config);
+  }
+}
+
+export function isEmailArchived(id: string): boolean {
+  return getArchivedEmails().includes(id);
 }

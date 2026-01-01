@@ -9,6 +9,7 @@ A terminal email client powered by [Resend](https://resend.com) and [OpenTUI](ht
 - Read email details with full body content
 - Reply to emails with quoted original message
 - Forward emails to other recipients
+- Delete/archive emails locally
 - Configurable email signature
 - API key setup wizard with secure storage
 - Vim-style navigation (j/k keys)
@@ -47,12 +48,14 @@ Configuration is stored in `~/.config/hypermail/config.json`.
 ### Inbox (list view)
 - `j/k` or arrows - Navigate emails
 - `Enter` - View email detail
+- `d` - Delete email
 - `r` - Refresh
 - `Esc` - Go back to menu
 
 ### Email Detail
 - `r` - Reply to email
 - `f` - Forward email
+- `d` - Delete email
 - `Esc/Q` - Go back to list
 
 ### Settings

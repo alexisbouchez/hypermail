@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { useKeyboard } from "@opentui/react";
 import { listReceivedEmails, getReceivedEmail } from "../api/resend";
+import { archiveEmail, getArchivedEmails } from "../config";
 import { ComposeContext } from "./Compose";
 
 interface InboxProps {
@@ -26,7 +27,7 @@ interface EmailDetail {
   created_at: string;
 }
 
-type View = "list" | "detail";
+type View = "list" | "detail" | "confirmDelete";
 
 export function Inbox({ onBack, onCompose }: InboxProps) {
   const [emails, setEmails] = useState<ReceivedEmail[]>([]);
@@ -47,7 +48,9 @@ export function Inbox({ onBack, onCompose }: InboxProps) {
       setError("");
       const result = await listReceivedEmails();
       if (result.data?.data) {
-        setEmails(result.data.data as ReceivedEmail[]);
+        const archived = getArchivedEmails();
+        const allEmails = result.data.data as ReceivedEmail[];
+        setEmails(allEmails.filter(e => !archived.includes(e.id)));
       } else {
         setEmails([]);
       }
@@ -97,7 +100,25 @@ export function Inbox({ onBack, onCompose }: InboxProps) {
     });
   }
 
+  function handleDelete() {
+    if (!selectedEmail) return;
+    archiveEmail(selectedEmail.id);
+    setEmails(prev => prev.filter(e => e.id !== selectedEmail.id));
+    setSelectedEmail(null);
+    setSelectedIndex(prev => Math.max(0, prev - 1));
+    setView("list");
+  }
+
   useKeyboard((e) => {
+    if (view === "confirmDelete") {
+      if (e.name === "y") {
+        handleDelete();
+      } else if (e.name === "n" || e.name === "escape") {
+        setView("detail");
+      }
+      return;
+    }
+
     if (view === "detail") {
       if (e.name === "escape" || e.name === "q" || e.name === "backspace") {
         setView("list");
@@ -106,6 +127,8 @@ export function Inbox({ onBack, onCompose }: InboxProps) {
         handleReply();
       } else if (e.name === "f") {
         handleForward();
+      } else if (e.name === "d") {
+        setView("confirmDelete");
       }
       return;
     }
@@ -120,6 +143,10 @@ export function Inbox({ onBack, onCompose }: InboxProps) {
       loadEmails();
     } else if (e.name === "return" && emails.length > 0) {
       loadEmailDetail(emails[selectedIndex].id);
+    } else if (e.name === "d" && emails.length > 0) {
+      loadEmailDetail(emails[selectedIndex].id).then(() => {
+        setView("confirmDelete");
+      });
     }
   });
 
@@ -149,13 +176,34 @@ export function Inbox({ onBack, onCompose }: InboxProps) {
     );
   }
 
+  if (view === "confirmDelete" && selectedEmail) {
+    return (
+      <box flexDirection="column" padding={1}>
+        <text bold color="red">
+          Delete Email?
+        </text>
+        <text> </text>
+        <text>From: {selectedEmail.from}</text>
+        <text>Subject: {selectedEmail.subject}</text>
+        <text> </text>
+        <text color="yellow">
+          This will archive the email locally (Resend API doesn't support deletion).
+        </text>
+        <text> </text>
+        <text>
+          Press <text color="green" bold>y</text> to confirm or <text color="red" bold>n</text> to cancel
+        </text>
+      </box>
+    );
+  }
+
   if (view === "detail" && selectedEmail) {
     return (
       <box flexDirection="column" padding={1}>
         <text bold color="cyan">
           Email Detail
         </text>
-        <text color="gray">r: reply | f: forward | Esc/Q: back</text>
+        <text color="gray">r: reply | f: forward | d: delete | Esc: back</text>
         <text> </text>
         <box flexDirection="row">
           <text color="gray">From: </text>
@@ -187,7 +235,7 @@ export function Inbox({ onBack, onCompose }: InboxProps) {
         Inbox
       </text>
       <text color="gray">
-        j/k: navigate | Enter: view | r: refresh | Esc: back
+        j/k: navigate | Enter: view | d: delete | r: refresh | Esc: back
       </text>
       <text> </text>
 
