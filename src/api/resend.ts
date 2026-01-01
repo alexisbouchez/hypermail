@@ -65,3 +65,13 @@ export async function getReceivedEmail(id: string) {
   const client = getResendClient();
   return client.emails.receiving.get(id);
 }
+
+export async function listSentEmails() {
+  const client = getResendClient();
+  return client.emails.list();
+}
+
+export async function getSentEmail(id: string) {
+  const client = getResendClient();
+  return client.emails.get(id);
+}

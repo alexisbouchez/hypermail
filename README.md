@@ -5,6 +5,7 @@ A terminal email client powered by [Resend](https://resend.com) and [OpenTUI](ht
 ## Features
 
 - Send emails via Resend API
+- View sent emails history
 - View received emails (via Resend's receiving API)
 - Read email details with full body content
 - Reply to emails with quoted original message
@@ -35,6 +36,7 @@ Configuration is stored in `~/.config/hypermail/config.json`.
 ### Main Menu
 - `c` - Compose new email
 - `i` - View inbox/domains
+- `t` - View sent emails
 - `s` - Settings (reconfigure API key)
 - `q` - Quit
 - `j/k` or arrows - Navigate
@@ -57,6 +59,12 @@ Configuration is stored in `~/.config/hypermail/config.json`.
 - `f` - Forward email
 - `d` - Delete email
 - `Esc/Q` - Go back to list
+
+### Sent Emails
+- `j/k` or arrows - Navigate emails
+- `Enter` - View email detail
+- `r` - Refresh
+- `Esc/Q` - Go back
 
 ### Settings
 - `Tab` or arrows - Navigate fields
