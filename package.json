@@ -1,0 +1,26 @@
+{
+  "name": "hypermail",
+  "module": "src/index.tsx",
+  "type": "module",
+  "private": true,
+  "bin": {
+    "hypermail": "./src/index.tsx"
+  },
+  "scripts": {
+    "start": "bun run src/index.tsx",
+    "dev": "bun --watch run src/index.tsx"
+  },
+  "devDependencies": {
+    "@types/bun": "latest",
+    "@types/react": "^19.2.7"
+  },
+  "peerDependencies": {
+    "typescript": "^5"
+  },
+  "dependencies": {
+    "@opentui/core": "^0.1.67",
+    "@opentui/react": "^0.1.67",
+    "react": "^19.2.3",
+    "resend": "^6.6.0"
+  }
+}

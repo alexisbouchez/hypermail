@@ -1,0 +1,233 @@
+import React, { useState, useEffect } from "react";
+import { useKeyboard } from "@opentui/react";
+import { listReceivedEmails, getReceivedEmail } from "../api/resend";
+import { ComposeContext } from "./Compose";
+
+interface InboxProps {
+  onBack: () => void;
+  onCompose: (context: ComposeContext) => void;
+}
+
+interface ReceivedEmail {
+  id: string;
+  from: string;
+  to: string[];
+  subject: string;
+  created_at: string;
+}
+
+interface EmailDetail {
+  id: string;
+  from: string;
+  to: string[];
+  subject: string;
+  text?: string;
+  html?: string;
+  created_at: string;
+}
+
+type View = "list" | "detail";
+
+export function Inbox({ onBack, onCompose }: InboxProps) {
+  const [emails, setEmails] = useState<ReceivedEmail[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
+  const [selectedIndex, setSelectedIndex] = useState(0);
+  const [view, setView] = useState<View>("list");
+  const [selectedEmail, setSelectedEmail] = useState<EmailDetail | null>(null);
+  const [loadingDetail, setLoadingDetail] = useState(false);
+
+  useEffect(() => {
+    loadEmails();
+  }, []);
+
+  async function loadEmails() {
+    try {
+      setLoading(true);
+      setError("");
+      const result = await listReceivedEmails();
+      if (result.data?.data) {
+        setEmails(result.data.data as ReceivedEmail[]);
+      } else {
+        setEmails([]);
+      }
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to load emails");
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  async function loadEmailDetail(id: string) {
+    try {
+      setLoadingDetail(true);
+      const result = await getReceivedEmail(id);
+      if (result.data) {
+        setSelectedEmail(result.data as EmailDetail);
+        setView("detail");
+      }
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to load email");
+    } finally {
+      setLoadingDetail(false);
+    }
+  }
+
+  function handleReply() {
+    if (!selectedEmail) return;
+    onCompose({
+      mode: "reply",
+      to: selectedEmail.from,
+      subject: selectedEmail.subject,
+      originalBody: selectedEmail.text,
+      originalFrom: selectedEmail.from,
+      originalDate: new Date(selectedEmail.created_at).toLocaleString(),
+    });
+  }
+
+  function handleForward() {
+    if (!selectedEmail) return;
+    onCompose({
+      mode: "forward",
+      subject: selectedEmail.subject,
+      originalBody: selectedEmail.text,
+      originalFrom: selectedEmail.from,
+      originalTo: selectedEmail.to.join(", "),
+      originalDate: new Date(selectedEmail.created_at).toLocaleString(),
+    });
+  }
+
+  useKeyboard((e) => {
+    if (view === "detail") {
+      if (e.name === "escape" || e.name === "q" || e.name === "backspace") {
+        setView("list");
+        setSelectedEmail(null);
+      } else if (e.name === "r") {
+        handleReply();
+      } else if (e.name === "f") {
+        handleForward();
+      }
+      return;
+    }
+
+    if (e.name === "escape" || e.name === "q") {
+      onBack();
+    } else if (e.name === "up" || e.name === "k") {
+      setSelectedIndex((prev) => Math.max(0, prev - 1));
+    } else if (e.name === "down" || e.name === "j") {
+      setSelectedIndex((prev) => Math.min(emails.length - 1, prev + 1));
+    } else if (e.name === "r") {
+      loadEmails();
+    } else if (e.name === "return" && emails.length > 0) {
+      loadEmailDetail(emails[selectedIndex].id);
+    }
+  });
+
+  if (loading) {
+    return (
+      <box flexDirection="column" padding={1}>
+        <text bold color="cyan">
+          Inbox
+        </text>
+        <text> </text>
+        <text color="yellow">Loading emails...</text>
+      </box>
+    );
+  }
+
+  if (error) {
+    return (
+      <box flexDirection="column" padding={1}>
+        <text bold color="cyan">
+          Inbox
+        </text>
+        <text> </text>
+        <text color="red">{error}</text>
+        <text> </text>
+        <text color="gray">Press Esc or Q to go back</text>
+      </box>
+    );
+  }
+
+  if (view === "detail" && selectedEmail) {
+    return (
+      <box flexDirection="column" padding={1}>
+        <text bold color="cyan">
+          Email Detail
+        </text>
+        <text color="gray">r: reply | f: forward | Esc/Q: back</text>
+        <text> </text>
+        <box flexDirection="row">
+          <text color="gray">From: </text>
+          <text>{selectedEmail.from}</text>
+        </box>
+        <box flexDirection="row">
+          <text color="gray">To: </text>
+          <text>{selectedEmail.to.join(", ")}</text>
+        </box>
+        <box flexDirection="row">
+          <text color="gray">Subject: </text>
+          <text bold>{selectedEmail.subject}</text>
+        </box>
+        <box flexDirection="row">
+          <text color="gray">Date: </text>
+          <text>{new Date(selectedEmail.created_at).toLocaleString()}</text>
+        </box>
+        <text> </text>
+        <text color="gray">--- Body ---</text>
+        <text> </text>
+        <text>{selectedEmail.text || "(No text content)"}</text>
+      </box>
+    );
+  }
+
+  return (
+    <box flexDirection="column" padding={1}>
+      <text bold color="cyan">
+        Inbox
+      </text>
+      <text color="gray">
+        j/k: navigate | Enter: view | r: refresh | Esc: back
+      </text>
+      <text> </text>
+
+      {emails.length === 0 ? (
+        <>
+          <text color="yellow">No emails received yet.</text>
+          <text> </text>
+          <text>
+            To receive emails, configure a receiving domain at resend.com
+          </text>
+        </>
+      ) : (
+        <>
+          {emails.map((email, index) => (
+            <box key={email.id} flexDirection="row">
+              <text color={index === selectedIndex ? "cyan" : "white"}>
+                {index === selectedIndex ? "> " : "  "}
+              </text>
+              <text bold={index === selectedIndex} color="yellow">
+                {email.from.slice(0, 20).padEnd(20)}
+              </text>
+              <text color="gray"> | </text>
+              <text bold={index === selectedIndex}>
+                {email.subject.slice(0, 40)}
+              </text>
+            </box>
+          ))}
+          <text> </text>
+          <text color="gray">
+            {emails.length} email{emails.length !== 1 ? "s" : ""}
+          </text>
+        </>
+      )}
+
+      {loadingDetail && (
+        <>
+          <text> </text>
+          <text color="yellow">Loading email...</text>
+        </>
+      )}
+    </box>
+  );
+}
