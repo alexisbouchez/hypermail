@@ -2,12 +2,21 @@ import { homedir } from "os";
 import { join } from "path";
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from "fs";
 
+export interface Draft {
+  id: string;
+  to: string;
+  subject: string;
+  body: string;
+  created_at: string;
+}
+
 export interface Config {
   apiKey?: string;
   defaultFrom?: string;
   signature?: string;
   archivedEmails?: string[];
   readEmails?: string[];
+  drafts?: Draft[];
 }
 
 const CONFIG_DIR = join(homedir(), ".config", "hypermail");
@@ -114,4 +123,44 @@ export function markAllAsRead(ids: string[]): void {
   ids.forEach(id => read.add(id));
   config.readEmails = [...read];
   saveConfig(config);
+}
+
+export function getDrafts(): Draft[] {
+  return loadConfig().drafts || [];
+}
+
+export function saveDraft(draft: Omit<Draft, "id" | "created_at">): Draft {
+  const config = loadConfig();
+  const drafts = config.drafts || [];
+  const newDraft: Draft = {
+    ...draft,
+    id: Date.now().toString(),
+    created_at: new Date().toISOString(),
+  };
+  drafts.push(newDraft);
+  config.drafts = drafts;
+  saveConfig(config);
+  return newDraft;
+}
+
+export function updateDraft(id: string, draft: Omit<Draft, "id" | "created_at">): void {
+  const config = loadConfig();
+  const drafts = config.drafts || [];
+  const index = drafts.findIndex(d => d.id === id);
+  if (index !== -1) {
+    drafts[index] = { ...drafts[index], ...draft };
+    config.drafts = drafts;
+    saveConfig(config);
+  }
+}
+
+export function deleteDraft(id: string): void {
+  const config = loadConfig();
+  const drafts = config.drafts || [];
+  config.drafts = drafts.filter(d => d.id !== id);
+  saveConfig(config);
+}
+
+export function getDraft(id: string): Draft | undefined {
+  return getDrafts().find(d => d.id === id);
 }

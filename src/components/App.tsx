@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { useKeyboard } from "@opentui/react";
-import { hasApiKey } from "../config";
+import { hasApiKey, Draft } from "../config";
 import { resetClient } from "../api/resend";
 import { Setup } from "./Setup";
 import { Settings } from "./Settings";
@@ -8,8 +8,9 @@ import { Compose, ComposeContext } from "./Compose";
 import { Inbox } from "./Inbox";
 import { Sent } from "./Sent";
 import { Help } from "./Help";
+import { Drafts } from "./Drafts";
 
-type View = "menu" | "setup" | "settings" | "compose" | "inbox" | "sent" | "help";
+type View = "menu" | "setup" | "settings" | "compose" | "inbox" | "sent" | "help" | "drafts";
 
 export function App() {
   const [view, setView] = useState<View>(() =>
@@ -17,9 +18,11 @@ export function App() {
   );
   const [selectedMenuItem, setSelectedMenuItem] = useState(0);
   const [composeContext, setComposeContext] = useState<ComposeContext | null>(null);
+  const [editingDraft, setEditingDraft] = useState<Draft | null>(null);
 
   const menuItems = [
     { key: "c", label: "Compose", description: "Write a new email", view: "compose" as View },
+    { key: "d", label: "Drafts", description: "View saved drafts", view: "drafts" as View },
     { key: "i", label: "Inbox", description: "View received emails", view: "inbox" as View },
     { key: "t", label: "Sent", description: "View sent emails", view: "sent" as View },
     { key: "s", label: "Settings", description: "Configure email & signature", view: "settings" as View },
@@ -61,11 +64,19 @@ export function App() {
 
   const handleBack = () => {
     setComposeContext(null);
+    setEditingDraft(null);
     setView("menu");
   };
 
   const handleCompose = (context: ComposeContext) => {
     setComposeContext(context);
+    setEditingDraft(null);
+    setView("compose");
+  };
+
+  const handleEditDraft = (draft: Draft) => {
+    setEditingDraft(draft);
+    setComposeContext(null);
     setView("compose");
   };
 
@@ -78,7 +89,11 @@ export function App() {
   }
 
   if (view === "compose") {
-    return <Compose onBack={handleBack} context={composeContext} />;
+    return <Compose onBack={handleBack} context={composeContext} draft={editingDraft} />;
+  }
+
+  if (view === "drafts") {
+    return <Drafts onBack={handleBack} onEditDraft={handleEditDraft} />;
   }
 
   if (view === "inbox") {

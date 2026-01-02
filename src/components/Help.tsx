@@ -22,6 +22,7 @@ export function Help({ onBack }: HelpProps) {
 
       <text bold color="yellow">Main Menu</text>
       <text>  c         Compose new email</text>
+      <text>  d         View drafts</text>
       <text>  i         Open inbox</text>
       <text>  t         View sent emails</text>
       <text>  s         Settings</text>
@@ -51,6 +52,7 @@ export function Help({ onBack }: HelpProps) {
       <text>  Tab       Next field</text>
       <text>  Shift+Tab Previous field</text>
       <text>  Ctrl+S    Send email</text>
+      <text>  Ctrl+D    Save as draft</text>
       <text>  Esc       Cancel and go back</text>
       <text> </text>
 

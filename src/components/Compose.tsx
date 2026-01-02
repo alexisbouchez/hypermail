@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { useKeyboard } from "@opentui/react";
 import { sendEmail } from "../api/resend";
-import { getDefaultFrom, getSignature } from "../config";
+import { getDefaultFrom, getSignature, saveDraft, updateDraft, deleteDraft, Draft } from "../config";
 
 export type ComposeMode = "new" | "reply" | "forward";
 
@@ -18,6 +18,7 @@ export interface ComposeContext {
 interface ComposeProps {
   onBack: () => void;
   context?: ComposeContext | null;
+  draft?: Draft | null;
 }
 
 type Field = "from" | "to" | "subject" | "body";
@@ -78,20 +79,23 @@ function formatBody(ctx: ComposeContext | null, signature?: string): string {
   return sig;
 }
 
-export function Compose({ onBack, context }: ComposeProps) {
+export function Compose({ onBack, context, draft }: ComposeProps) {
   const defaultFrom = getDefaultFrom() || "";
   const signature = getSignature();
   const mode = context?.mode || "new";
   const isForward = mode === "forward";
   const isReply = mode === "reply";
+  const isDraft = !!draft;
 
   const [field, setField] = useState<Field>(isForward ? "to" : "body");
   const [from, setFrom] = useState(defaultFrom);
-  const [to, setTo] = useState(context?.to || "");
-  const [subject, setSubject] = useState(context ? formatSubject(context) : "");
-  const [body, setBody] = useState(formatBody(context || null, signature));
+  const [to, setTo] = useState(draft?.to || context?.to || "");
+  const [subject, setSubject] = useState(draft?.subject || (context ? formatSubject(context) : ""));
+  const [body, setBody] = useState(draft?.body || formatBody(context || null, signature));
   const [status, setStatus] = useState<Status>("composing");
   const [error, setError] = useState("");
+  const [draftId, setDraftId] = useState<string | null>(draft?.id || null);
+  const [draftSaved, setDraftSaved] = useState(false);
 
   const fields: Field[] = ["from", "to", "subject", "body"];
   const currentIndex = fields.indexOf(field);
@@ -159,11 +163,24 @@ export function Compose({ onBack, context }: ComposeProps) {
           subject,
           text: body,
         });
+        if (draftId) {
+          deleteDraft(draftId);
+        }
         setStatus("sent");
       } catch (err) {
         setError(err instanceof Error ? err.message : "Failed to send email");
         setStatus("error");
       }
+    } else if (e.ctrl && e.name === "d") {
+      const draftData = { to, subject, body };
+      if (draftId) {
+        updateDraft(draftId, draftData);
+      } else {
+        const newDraft = saveDraft(draftData);
+        setDraftId(newDraft.id);
+      }
+      setDraftSaved(true);
+      setTimeout(() => setDraftSaved(false), 2000);
     } else if (e.name === "backspace") {
       setValue(field, getValue(field).slice(0, -1));
     } else if (e.name === "return" && field === "body") {
@@ -235,7 +252,7 @@ export function Compose({ onBack, context }: ComposeProps) {
         {getTitle()}
       </text>
       <text color="gray">
-        Tab/Arrows: navigate | Ctrl+S: send | Esc: back
+        Tab/Arrows: navigate | Ctrl+S: send | Ctrl+D: save draft | Esc: back
       </text>
       <text> </text>
 
@@ -262,6 +279,13 @@ export function Compose({ onBack, context }: ComposeProps) {
         <>
           <text> </text>
           <text color="yellow">Sending...</text>
+        </>
+      )}
+
+      {draftSaved && (
+        <>
+          <text> </text>
+          <text color="green">Draft saved!</text>
         </>
       )}
     </box>
