@@ -35,6 +35,7 @@ export function Help({ onBack }: HelpProps) {
       <text>  /         Search emails</text>
       <text>  Enter     View email detail</text>
       <text>  r         Refresh list</text>
+      <text>  a         Mark all as read (inbox only)</text>
       <text>  d         Delete email (inbox only)</text>
       <text>  Esc       Clear search or go back</text>
       <text> </text>

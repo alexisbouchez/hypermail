@@ -107,3 +107,11 @@ export function markEmailAsRead(id: string): void {
 export function isEmailRead(id: string): boolean {
   return getReadEmails().includes(id);
 }
+
+export function markAllAsRead(ids: string[]): void {
+  const config = loadConfig();
+  const read = new Set(config.readEmails || []);
+  ids.forEach(id => read.add(id));
+  config.readEmails = [...read];
+  saveConfig(config);
+}

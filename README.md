@@ -57,6 +57,7 @@ Configuration is stored in `~/.config/hypermail/config.json`.
 - `n/p` - Next/previous page
 - `/` - Search emails (by from, to, subject)
 - `Enter` - View email detail
+- `a` - Mark all as read
 - `d` - Delete email
 - `r` - Refresh
 - `Esc` - Clear search or go back to menu

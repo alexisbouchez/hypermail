@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { useKeyboard } from "@opentui/react";
 import { listReceivedEmails, getReceivedEmail } from "../api/resend";
-import { archiveEmail, getArchivedEmails, markEmailAsRead, getReadEmails } from "../config";
+import { archiveEmail, getArchivedEmails, markEmailAsRead, getReadEmails, markAllAsRead } from "../config";
 import { ComposeContext } from "./Compose";
 
 interface InboxProps {
@@ -207,6 +207,10 @@ export function Inbox({ onBack, onCompose }: InboxProps) {
       loadEmailDetail(paginatedEmails[selectedIndex].id).then(() => {
         setView("confirmDelete");
       });
+    } else if (e.char === "a" && emails.length > 0) {
+      const allIds = emails.map(e => e.id);
+      markAllAsRead(allIds);
+      setReadEmailIds(new Set(allIds));
     }
   });
 
@@ -295,7 +299,7 @@ export function Inbox({ onBack, onCompose }: InboxProps) {
         Inbox
       </text>
       <text color="gray">
-        j/k: navigate | n/p: page | /: search | Enter: view | d: delete | r: refresh | Esc: back
+        j/k: navigate | n/p: page | /: search | Enter: view | d: delete | a: read all | r: refresh
       </text>
       <text> </text>
 
