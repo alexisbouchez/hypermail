@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { useKeyboard } from "@opentui/react";
 import { sendEmail } from "../api/resend";
-import { getDefaultFrom, getSignature, saveDraft, updateDraft, deleteDraft, Draft } from "../config";
+import { getDefaultFrom, getSignature, saveDraft, updateDraft, deleteDraft, Draft, getContacts, Contact } from "../config";
 
 export type ComposeMode = "new" | "reply" | "forward";
 
@@ -96,6 +96,16 @@ export function Compose({ onBack, context, draft }: ComposeProps) {
   const [error, setError] = useState("");
   const [draftId, setDraftId] = useState<string | null>(draft?.id || null);
   const [draftSaved, setDraftSaved] = useState(false);
+  const [showContacts, setShowContacts] = useState(false);
+  const [contacts] = useState<Contact[]>(getContacts());
+  const [contactIndex, setContactIndex] = useState(0);
+  const [contactSearch, setContactSearch] = useState("");
+
+  const filteredContacts = contacts.filter((c) => {
+    if (!contactSearch) return true;
+    const query = contactSearch.toLowerCase();
+    return c.name.toLowerCase().includes(query) || c.email.toLowerCase().includes(query);
+  });
 
   const fields: Field[] = ["from", "to", "subject", "body"];
   const currentIndex = fields.indexOf(field);
@@ -134,6 +144,32 @@ export function Compose({ onBack, context, draft }: ComposeProps) {
     if (status !== "composing") {
       if (e.name === "escape" || e.name === "q") {
         onBack();
+      }
+      return;
+    }
+
+    if (showContacts) {
+      if (e.name === "escape") {
+        setShowContacts(false);
+        setContactSearch("");
+        setContactIndex(0);
+      } else if (e.name === "up" || e.name === "k") {
+        setContactIndex((prev) => Math.max(0, prev - 1));
+      } else if (e.name === "down" || e.name === "j") {
+        setContactIndex((prev) => Math.min(filteredContacts.length - 1, prev + 1));
+      } else if (e.name === "return" && filteredContacts.length > 0) {
+        const contact = filteredContacts[contactIndex];
+        const newTo = to ? `${to}, ${contact.email}` : contact.email;
+        setTo(newTo);
+        setShowContacts(false);
+        setContactSearch("");
+        setContactIndex(0);
+      } else if (e.name === "backspace") {
+        setContactSearch((prev) => prev.slice(0, -1));
+        setContactIndex(0);
+      } else if (e.char && e.char.length === 1) {
+        setContactSearch((prev) => prev + e.char);
+        setContactIndex(0);
       }
       return;
     }
@@ -181,6 +217,10 @@ export function Compose({ onBack, context, draft }: ComposeProps) {
       }
       setDraftSaved(true);
       setTimeout(() => setDraftSaved(false), 2000);
+    } else if (e.ctrl && e.name === "b") {
+      if (contacts.length > 0) {
+        setShowContacts(true);
+      }
     } else if (e.name === "backspace") {
       setValue(field, getValue(field).slice(0, -1));
     } else if (e.name === "return" && field === "body") {
@@ -252,7 +292,7 @@ export function Compose({ onBack, context, draft }: ComposeProps) {
         {getTitle()}
       </text>
       <text color="gray">
-        Tab/Arrows: navigate | Ctrl+S: send | Ctrl+D: save draft | Esc: back
+        Tab/Arrows: navigate | Ctrl+S: send | Ctrl+D: save draft | Ctrl+B: contacts | Esc: back
       </text>
       <text> </text>
 
@@ -267,6 +307,43 @@ export function Compose({ onBack, context, draft }: ComposeProps) {
         <text>{body}</text>
         {field === "body" && <text color="gray">_</text>}
       </box>
+
+      {showContacts && (
+        <>
+          <text> </text>
+          <box borderStyle="single" padding={1}>
+            <box flexDirection="column">
+              <text bold color="cyan">Select Contact</text>
+              <text color="gray">j/k: navigate | Enter: select | Esc: close</text>
+              <text> </text>
+              <box flexDirection="row">
+                <text color="cyan">Search: </text>
+                <text>{contactSearch}</text>
+                <text color="cyan">_</text>
+              </box>
+              <text> </text>
+              {filteredContacts.length === 0 ? (
+                <text color="yellow">No contacts found</text>
+              ) : (
+                filteredContacts.slice(0, 5).map((contact, index) => (
+                  <box key={contact.id} flexDirection="row">
+                    <text color={index === contactIndex ? "cyan" : "white"}>
+                      {index === contactIndex ? "> " : "  "}
+                    </text>
+                    <text bold={index === contactIndex} color="magenta">
+                      {contact.name.slice(0, 15).padEnd(15)}
+                    </text>
+                    <text color="gray"> </text>
+                    <text bold={index === contactIndex}>
+                      {contact.email.slice(0, 25)}
+                    </text>
+                  </box>
+                ))
+              )}
+            </box>
+          </box>
+        </>
+      )}
 
       {error && (
         <>

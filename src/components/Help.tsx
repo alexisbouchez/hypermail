@@ -25,6 +25,7 @@ export function Help({ onBack }: HelpProps) {
       <text>  d         View drafts</text>
       <text>  i         Open inbox</text>
       <text>  t         View sent emails</text>
+      <text>  b         Contacts (address book)</text>
       <text>  s         Settings</text>
       <text>  ?         This help screen</text>
       <text>  q         Quit</text>
@@ -53,6 +54,7 @@ export function Help({ onBack }: HelpProps) {
       <text>  Shift+Tab Previous field</text>
       <text>  Ctrl+S    Send email</text>
       <text>  Ctrl+D    Save as draft</text>
+      <text>  Ctrl+B    Open contacts picker</text>
       <text>  Esc       Cancel and go back</text>
       <text> </text>
 

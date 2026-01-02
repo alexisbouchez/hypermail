@@ -15,6 +15,7 @@ A terminal email client powered by [Resend](https://resend.com) and [OpenTUI](ht
 - Forward emails to other recipients
 - Delete/archive emails locally
 - Email drafts support (save and resume later)
+- Contact address book with quick picker in compose
 - Configurable email signature
 - API key setup wizard with secure storage
 - Vim-style navigation (j/k keys)
@@ -43,6 +44,7 @@ Configuration is stored in `~/.config/hypermail/config.json`.
 - `d` - View drafts
 - `i` - View inbox/domains
 - `t` - View sent emails
+- `b` - Contacts (address book)
 - `s` - Settings (reconfigure API key)
 - `?` - Help (keyboard shortcuts)
 - `q` - Quit
@@ -53,6 +55,7 @@ Configuration is stored in `~/.config/hypermail/config.json`.
 - `Tab` or arrows - Navigate between fields
 - `Ctrl+S` - Send email
 - `Ctrl+D` - Save as draft
+- `Ctrl+B` - Open contacts picker
 - `Esc` - Go back
 
 ### Drafts
@@ -60,6 +63,13 @@ Configuration is stored in `~/.config/hypermail/config.json`.
 - `Enter` - Edit draft
 - `d` - Delete draft
 - `Esc` - Go back
+
+### Contacts
+- `j/k` or arrows - Navigate contacts
+- `/` - Search contacts
+- `a` - Add new contact
+- `d` - Delete contact
+- `Esc` - Clear search or go back
 
 ### Inbox (list view)
 - `j/k` or arrows - Navigate emails

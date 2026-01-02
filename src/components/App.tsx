@@ -9,8 +9,9 @@ import { Inbox } from "./Inbox";
 import { Sent } from "./Sent";
 import { Help } from "./Help";
 import { Drafts } from "./Drafts";
+import { Contacts } from "./Contacts";
 
-type View = "menu" | "setup" | "settings" | "compose" | "inbox" | "sent" | "help" | "drafts";
+type View = "menu" | "setup" | "settings" | "compose" | "inbox" | "sent" | "help" | "drafts" | "contacts";
 
 export function App() {
   const [view, setView] = useState<View>(() =>
@@ -25,6 +26,7 @@ export function App() {
     { key: "d", label: "Drafts", description: "View saved drafts", view: "drafts" as View },
     { key: "i", label: "Inbox", description: "View received emails", view: "inbox" as View },
     { key: "t", label: "Sent", description: "View sent emails", view: "sent" as View },
+    { key: "b", label: "Contacts", description: "Address book", view: "contacts" as View },
     { key: "s", label: "Settings", description: "Configure email & signature", view: "settings" as View },
     { key: "?", label: "Help", description: "Keyboard shortcuts", view: "help" as View },
     { key: "q", label: "Quit", description: "Exit hypermail", view: null },
@@ -106,6 +108,10 @@ export function App() {
 
   if (view === "help") {
     return <Help onBack={handleBack} />;
+  }
+
+  if (view === "contacts") {
+    return <Contacts onBack={handleBack} />;
   }
 
   return (

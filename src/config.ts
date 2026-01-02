@@ -10,6 +10,12 @@ export interface Draft {
   created_at: string;
 }
 
+export interface Contact {
+  id: string;
+  name: string;
+  email: string;
+}
+
 export interface Config {
   apiKey?: string;
   defaultFrom?: string;
@@ -17,6 +23,7 @@ export interface Config {
   archivedEmails?: string[];
   readEmails?: string[];
   drafts?: Draft[];
+  contacts?: Contact[];
 }
 
 const CONFIG_DIR = join(homedir(), ".config", "hypermail");
@@ -163,4 +170,43 @@ export function deleteDraft(id: string): void {
 
 export function getDraft(id: string): Draft | undefined {
   return getDrafts().find(d => d.id === id);
+}
+
+export function getContacts(): Contact[] {
+  return loadConfig().contacts || [];
+}
+
+export function addContact(contact: Omit<Contact, "id">): Contact {
+  const config = loadConfig();
+  const contacts = config.contacts || [];
+  const newContact: Contact = {
+    ...contact,
+    id: Date.now().toString(),
+  };
+  contacts.push(newContact);
+  config.contacts = contacts;
+  saveConfig(config);
+  return newContact;
+}
+
+export function updateContact(id: string, contact: Omit<Contact, "id">): void {
+  const config = loadConfig();
+  const contacts = config.contacts || [];
+  const index = contacts.findIndex(c => c.id === id);
+  if (index !== -1) {
+    contacts[index] = { ...contacts[index], ...contact };
+    config.contacts = contacts;
+    saveConfig(config);
+  }
+}
+
+export function deleteContact(id: string): void {
+  const config = loadConfig();
+  const contacts = config.contacts || [];
+  config.contacts = contacts.filter(c => c.id !== id);
+  saveConfig(config);
+}
+
+export function getContact(id: string): Contact | undefined {
+  return getContacts().find(c => c.id === id);
 }
