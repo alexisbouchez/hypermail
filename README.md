@@ -16,6 +16,7 @@ A terminal email client powered by [Resend](https://resend.com) and [OpenTUI](ht
 - Configurable email signature
 - API key setup wizard with secure storage
 - Vim-style navigation (j/k keys)
+- Built-in keyboard shortcuts help screen
 
 ## Installation
 
@@ -40,6 +41,7 @@ Configuration is stored in `~/.config/hypermail/config.json`.
 - `i` - View inbox/domains
 - `t` - View sent emails
 - `s` - Settings (reconfigure API key)
+- `?` - Help (keyboard shortcuts)
 - `q` - Quit
 - `j/k` or arrows - Navigate
 - `Enter` - Select

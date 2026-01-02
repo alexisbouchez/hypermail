@@ -7,8 +7,9 @@ import { Settings } from "./Settings";
 import { Compose, ComposeContext } from "./Compose";
 import { Inbox } from "./Inbox";
 import { Sent } from "./Sent";
+import { Help } from "./Help";
 
-type View = "menu" | "setup" | "settings" | "compose" | "inbox" | "sent";
+type View = "menu" | "setup" | "settings" | "compose" | "inbox" | "sent" | "help";
 
 export function App() {
   const [view, setView] = useState<View>(() =>
@@ -22,6 +23,7 @@ export function App() {
     { key: "i", label: "Inbox", description: "View received emails", view: "inbox" as View },
     { key: "t", label: "Sent", description: "View sent emails", view: "sent" as View },
     { key: "s", label: "Settings", description: "Configure email & signature", view: "settings" as View },
+    { key: "?", label: "Help", description: "Keyboard shortcuts", view: "help" as View },
     { key: "q", label: "Quit", description: "Exit hypermail", view: null },
   ];
 
@@ -40,7 +42,8 @@ export function App() {
         setView(item.view);
       }
     } else {
-      const item = menuItems.find((m) => m.key === e.name);
+      const key = e.char || e.name;
+      const item = menuItems.find((m) => m.key === key);
       if (item) {
         if (item.view === null) {
           process.exit(0);
@@ -84,6 +87,10 @@ export function App() {
 
   if (view === "sent") {
     return <Sent onBack={handleBack} />;
+  }
+
+  if (view === "help") {
+    return <Help onBack={handleBack} />;
   }
 
   return (
