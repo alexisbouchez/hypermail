@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { useKeyboard } from "@opentui/react";
 import { listReceivedEmails, getReceivedEmail } from "../api/resend";
-import { archiveEmail, getArchivedEmails } from "../config";
+import { archiveEmail, getArchivedEmails, markEmailAsRead, getReadEmails } from "../config";
 import { ComposeContext } from "./Compose";
 
 interface InboxProps {
@@ -42,6 +42,7 @@ export function Inbox({ onBack, onCompose }: InboxProps) {
   const [searchQuery, setSearchQuery] = useState("");
   const [searching, setSearching] = useState(false);
   const [page, setPage] = useState(0);
+  const [readEmailIds, setReadEmailIds] = useState<Set<string>>(new Set(getReadEmails()));
 
   const filteredEmails = emails.filter((email) => {
     if (!searchQuery) return true;
@@ -89,6 +90,10 @@ export function Inbox({ onBack, onCompose }: InboxProps) {
       if (result.data) {
         setSelectedEmail(result.data as EmailDetail);
         setView("detail");
+        if (!readEmailIds.has(id)) {
+          markEmailAsRead(id);
+          setReadEmailIds(prev => new Set([...prev, id]));
+        }
       }
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to load email");
@@ -317,23 +322,33 @@ export function Inbox({ onBack, onCompose }: InboxProps) {
         <text color="yellow">No emails match "{searchQuery}"</text>
       ) : (
         <>
-          {paginatedEmails.map((email, index) => (
-            <box key={email.id} flexDirection="row">
-              <text color={index === selectedIndex ? "cyan" : "white"}>
-                {index === selectedIndex ? "> " : "  "}
-              </text>
-              <text bold={index === selectedIndex} color="yellow">
-                {email.from.slice(0, 20).padEnd(20)}
-              </text>
-              <text color="gray"> | </text>
-              <text bold={index === selectedIndex}>
-                {email.subject.slice(0, 40)}
-              </text>
-            </box>
-          ))}
+          {paginatedEmails.map((email, index) => {
+            const isUnread = !readEmailIds.has(email.id);
+            return (
+              <box key={email.id} flexDirection="row">
+                <text color={index === selectedIndex ? "cyan" : "white"}>
+                  {index === selectedIndex ? "> " : "  "}
+                </text>
+                <text color={isUnread ? "magenta" : "gray"}>
+                  {isUnread ? "* " : "  "}
+                </text>
+                <text bold={index === selectedIndex || isUnread} color="yellow">
+                  {email.from.slice(0, 18).padEnd(18)}
+                </text>
+                <text color="gray"> | </text>
+                <text bold={index === selectedIndex || isUnread}>
+                  {email.subject.slice(0, 40)}
+                </text>
+              </box>
+            );
+          })}
           <text> </text>
           <text color="gray">
             {filteredEmails.length}{searchQuery ? ` of ${emails.length}` : ""} email{filteredEmails.length !== 1 ? "s" : ""}
+            {(() => {
+              const unreadCount = filteredEmails.filter(e => !readEmailIds.has(e.id)).length;
+              return unreadCount > 0 ? ` (${unreadCount} unread)` : "";
+            })()}
             {totalPages > 1 && ` | Page ${page + 1}/${totalPages}`}
           </text>
         </>

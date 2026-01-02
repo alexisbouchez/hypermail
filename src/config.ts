@@ -7,6 +7,7 @@ export interface Config {
   defaultFrom?: string;
   signature?: string;
   archivedEmails?: string[];
+  readEmails?: string[];
 }
 
 const CONFIG_DIR = join(homedir(), ".config", "hypermail");
@@ -87,4 +88,22 @@ export function archiveEmail(id: string): void {
 
 export function isEmailArchived(id: string): boolean {
   return getArchivedEmails().includes(id);
+}
+
+export function getReadEmails(): string[] {
+  return loadConfig().readEmails || [];
+}
+
+export function markEmailAsRead(id: string): void {
+  const config = loadConfig();
+  const read = config.readEmails || [];
+  if (!read.includes(id)) {
+    read.push(id);
+    config.readEmails = read;
+    saveConfig(config);
+  }
+}
+
+export function isEmailRead(id: string): boolean {
+  return getReadEmails().includes(id);
 }

@@ -7,6 +7,7 @@ A terminal email client powered by [Resend](https://resend.com) and [OpenTUI](ht
 - Send emails via Resend API
 - View sent emails history
 - View received emails (via Resend's receiving API)
+- Unread/read status indicators with unread count
 - Search emails by sender, recipient, or subject
 - Pagination for long email lists (10 per page)
 - Read email details with full body content
